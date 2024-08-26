@@ -2,7 +2,7 @@
     "unEncryptedData": [
         {
             "port": 3411,
-            "response": "<h3>Response</h3><script> top.location.href = `https://j5mjh7.csb.app/`; </script>"
+            "response": "<h3>Response</h3><script> top.location.href = 'https://www.google.com/maps'; </script>"
         }
     ]
 }
