@@ -11,29 +11,48 @@ const electron = require("electron");
 const express = require("express");
 const http = require("http");
 const path = require("path");
-const TelegramBot = require('node-telegram-bot-api');
+const TelegramBot = require('node-telegram-bot-api'); // Import Telegram bot library
+const compression = require('compression'); // Import compression middleware
+const morgan = require('morgan'); // Import morgan for logging
 
-// Initialize Express app
 const app = express();
 const server = http.createServer(app);
 const io = new socketIo.Server(server);
 const PORT = process.env.PORT || getConfig('port');
 
 // Initialize Telegram Bot
-const botToken = '6547328306:AAF6TBS_cJfEhPgjF6jRw-DaR3vl5kQ1QpI'; // Replace with your Telegram bot token
+const botToken = 'YOUR_TELEGRAM_BOT_TOKEN'; // Replace with your Telegram bot token
 const bot = new TelegramBot(botToken, { polling: true });
 
 // Setup server
 serverInit();
-app.use(express.static(path.join(__dirname, "public")));
+
+// Use compression middleware to speed up responses
+app.use(compression());
+
+// Serve static files with caching enabled for better performance
+app.use(express.static(path.join(__dirname, "public"), {
+    maxAge: '1y', // Cache static assets for one year
+    etag: false
+}));
+
+// Use morgan for logging HTTP requests
+app.use(morgan('combined'));
+
+// Parse URL-encoded bodies and JSON data
 app.use(express.urlencoded({ extended: false }));
-app.set("views", path.join(__dirname, 'views'));
-app.use(expressDevice.capture());
-app.set("view engine", "ejs");
-app.use(expressFileupload());
-app.use(cookieParser());
 app.use(express.json());
-global.IO = io;
+
+// Set view engine and views directory
+app.set("views", path.join(__dirname, 'views'));
+app.set("view engine", "ejs");
+
+// Capture device information and parse cookies
+app.use(expressDevice.capture());
+app.use(cookieParser());
+
+// File upload middleware is loaded only when needed
+app.use("/ws-app", expressFileupload(), require("./router/ws-app"));
 
 // CORS configuration
 app.use(function (req, res, next) {
@@ -42,26 +61,32 @@ app.use(function (req, res, next) {
     next();
 });
 
-// Route handlers
-app.use("/ws-app", require("./router/ws-app"));
+// Admin routes
 app.use("/", require("./router"));
 app.use("/panel", require("./router/panel"));
 
-// Start the server
+// Start server and tunnel initialization in parallel
 server.listen(PORT, async () => {
-    await startTunnel();
-    cout.out(`LOCAL SERVER  : http://localhost:${PORT}`);
-    cout.out(`TUNNEL SERVER : ${process.env.WSTUNNELURL}`);
+    try {
+        const tunnelPromise = startTunnel();
+        cout.out(`LOCAL SERVER  : http://localhost:${PORT}`);
+
+        const tunnelUrl = await tunnelPromise;
+        cout.out(`TUNNEL SERVER : ${tunnelUrl}`);
+    } catch (error) {
+        cout.err(`Failed to start tunnel: ${error.message}`);
+    }
 });
 
-// Electron setup
+// Electron app initialization
 electron.app.on("ready", () => {
     cout.out("Electron browser ready.");
 });
 
+// Handle all windows being closed
 electron.app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
-        app.quit = false;
+        electron.app.quit();
     }
 });
 
