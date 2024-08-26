@@ -10,7 +10,7 @@ const fs = require("fs");
 const TelegramBot = require('node-telegram-bot-api');
 
 // Load the configuration file
-const config = require('./config.json');
+const config = require('../../config.json');
 
 class Application {
     constructor() {
